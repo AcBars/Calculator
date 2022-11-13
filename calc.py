@@ -15,11 +15,11 @@ def expression_in_brackets(expression):
 
 
 def calc_in_brackets(full_expression, expression):
-    pattern = re.compile(r"[-|+]*[0-9]+")
+    pattern = re.compile(r"[-|+]*[\.0-9]+")
     m = pattern.findall(expression)
     sum = 0
     for i in m:
-        sum += int(i)
+        sum += float(i)
     # print(sum)
     full_expression = str(full_expression).replace(expression, str(sum))
     return full_expression
@@ -61,6 +61,8 @@ def plus_minus(full_expression):
         sum += float(i)
         full_expression = str(sum)
     return full_expression
+
+
 def calc_expression(expression) -> str:
     expression = expression.replace(" ", '')
     expression = multiplicate(expression)
@@ -72,4 +74,5 @@ def calc_expression(expression) -> str:
     return expression
 
 # demo
-#print(calc_expression('((1+2)+3)*2*2/(3+9)+(12+13)'))
+# print(calc_expression('((1+2)+3)*2*2/(3+9)+(12.5+13.5)'))
+
