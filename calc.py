@@ -62,26 +62,17 @@ def plus_minus(full_expression):
         full_expression = str(sum)
     return full_expression
 
-calc_str = '((1+2)+3)*2*2/(3+9)+(12+13)'
-calc_str = input('введите строку для расчета:')
-calc_str = calc_str.replace(" ", '')
-#print(f'\n\nисходное выражение: {calc_str}')
+#calc_str = '((1+2)+3)*2*2/(3+9)+(12+13)'
+#calc_str = input('введите строку для расчета:')
 
-calc_str = multiplicate(calc_str)
-# print(f'multiplicate: {calc_str}')
-calc_str = devide(calc_str)
-# print(f'devide: {calc_str}')
-calc_str = expression_in_brackets(calc_str)
-# print(f'expression_in_brackets: {calc_str}')
+def calc_expression(expression) -> float:
+    expression = expression.replace(" ", '')
+    expression = multiplicate(expression)
+    expression = devide(expression)
+    expression = expression_in_brackets(expression)
+    expression = multiplicate(expression)
+    expression = devide(expression)
+    expression = plus_minus(expression)
+    return float(expression)
 
-calc_str = multiplicate(calc_str)
-# print(f'multiplicate: {calc_str}')
-
-calc_str = devide(calc_str)
-# print(f'devide: {calc_str}')
-
-calc_str = plus_minus(calc_str)
-# print(f'plus_minus: {calc_str}')
-
-print(float(calc_str))
-
+print(calc_expression(calc_str))
