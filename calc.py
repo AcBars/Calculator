@@ -61,7 +61,7 @@ def plus_minus(full_expression):
         sum += float(i)
         full_expression = str(sum)
     return full_expression
-def calc_expression(expression) -> float:
+def calc_expression(expression) -> str:
     expression = expression.replace(" ", '')
     expression = multiplicate(expression)
     expression = divide(expression)
