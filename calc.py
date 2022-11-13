@@ -65,6 +65,7 @@ def plus_minus(full_expression):
 
 def calc_expression(expression) -> str:
     expression = expression.replace(" ", '')
+    expression = expression.replace(",", '.')
     expression = multiplicate(expression)
     expression = divide(expression)
     expression = expression_in_brackets(expression)
@@ -74,5 +75,6 @@ def calc_expression(expression) -> str:
     return expression
 
 # demo
-# print(calc_expression('((1+2)+3)*2*2/(3+9)+(12.5+13.5)'))
+#print(calc_expression('((1+2)+3)*2*2/(3+9)+(12.5+13.5)'))
+#print(calc_expression('((1+2)+3)*2*2/(3+9)+(12,5+13,5)'))
 
