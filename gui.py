@@ -73,14 +73,20 @@ class MainWindow(QMainWindow):
     @staticmethod
     def _get_buttons_list():
         return [
-            [('etc_lp', '('), ('etc_rp', ')'), ('etc_ac', 'AC'), ('etc_plusminus', '+/-'), ('etc_percent', '%'),
-             ('op_div', '÷')],
-            [('etc_pow2', 'x^2'), ('etc_pow_y', 'x^y'), ('num_7', '7'), ('num_8', '8'), ('num_9', '9'),
-             ('op_mult', '×')],
-            [('etc_2pow_x', '2^x'), ('etc_10pow_x', '10^x'), ('num_4', '4'), ('num_5', '5'), ('num_6', '6'),
-             ('op_minus', '-')],
-            [('etc_root2', 'sqrt(x)'), ('num_1', '1'), ('num_2', '2'), ('num_3', '3'), ('op_plus', '+')],
-            [('etc_root_y', 'root(x, y)'), ('num_0', '0'), ('num_comma', ','), ('op_equal', '=')],
+            [('etc_lp', '('), ('etc_rp', ')'), ('etc_ac', 'AC'),
+             ('etc_plusminus', '+\u2044-'), ('etc_percent', '%'), ('op_div', '÷')],
+
+            [('etc_pow2', 'x\u00B2'), ('etc_pow_y', 'x\u02B8'), ('num_7', '7'),
+             ('num_8', '8'), ('num_9', '9'), ('op_mult', '×')],
+
+            [('etc_2pow_x', '2\u02E3'), ('etc_10pow_x', '10\u02E3'), ('num_4', '4'),
+             ('num_5', '5'), ('num_6', '6'), ('op_minus', '-')],
+
+            [('etc_root2', '\u221Ax\u0305'), ('num_1', '1'),
+             ('num_2', '2'), ('num_3', '3'), ('op_plus', '+')],
+
+            [('etc_root_y', '\u02B8\u221Ax\u0305'), ('num_0', '0'),
+             ('num_comma', ','), ('op_equal', '=')],
         ]
 
     def _create_buttons(self, buttons_list, layout):
@@ -125,14 +131,14 @@ class MainWindow(QMainWindow):
                            "QLabel {"
                            "    background-color: rgb(50, 50, 50);"
                            "    padding: 5px;"
-                           f"    font: {BUTTON_HEIGHT // 2}px"
+                           f"    font: {BUTTON_WIDTH // 2}px"
                            "}"
                            "QPushButton {"
                            "    border-top: 1px solid;"
                            "    border-left: 1px solid;"
                            "    border-style: outset;"
                            "    border-color: rgb(50, 50, 50);"
-                           "    font: 20px"
+                           f"    font: {BUTTON_HEIGHT // 2}px"
                            "}"
                            "QPushButton[objectName^='etc'] {"
                            "    background-color: rgb(70, 70, 70);"
