@@ -1,12 +1,15 @@
 from functools import partial
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QKeyCombination, Qt
+from PyQt6.QtGui import QGuiApplication, QKeyEvent, QKeySequence
 from PyQt6.QtWidgets import QGridLayout, QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget
+
+import calc
 
 BUTTON_HEIGHT = 50
 BUTTON_WIDTH = int(BUTTON_HEIGHT * 1.2)
 BUTTON_ROWS = 5
-BUTTON_COLS = 4
+BUTTON_COLS = 6
 DISPLAY_HEIGHT = BUTTON_HEIGHT * 2
 WINDOW_WIDTH = int(BUTTON_COLS * BUTTON_WIDTH)
 WINDOW_HEIGHT = DISPLAY_HEIGHT + BUTTON_ROWS * BUTTON_HEIGHT
@@ -18,9 +21,9 @@ def _find_last_number(expr):
         if char.isdigit() or char == ',':
             last_num = char + last_num
         elif last_num:
-            return -i, last_num
+            return -i + 1, last_num
 
-    return 0, last_num if last_num else '0'
+    return 0, last_num or '0'
 
 
 class CalcPushButton(QPushButton):
@@ -40,58 +43,10 @@ class MainWindow(QMainWindow):
         main_layout.setSpacing(0)
         main_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.display = QLabel('0')
-        self.display.setAlignment(Qt.AlignmentFlag.AlignRight)
-        self.display.setFixedSize(WINDOW_WIDTH, DISPLAY_HEIGHT)
-        self.display.setWordWrap(True)
+        self._create_display()
+        main_layout.addWidget(self._display)
 
-        main_layout.addWidget(self.display)
-
-        layout = QGridLayout()
-        layout.setSpacing(0)
-        layout.setContentsMargins(0, 0, 0, 0)
-
-        self.buttons = {}
-
-        button_list = [
-            [('etc_ac', 'AC'), ('etc_plusminus', '+/-'), ('etc_percent', '%'), ('op_div', '÷')],
-            [('num_7', '7'), ('num_8', '8'), ('num_9', '9'), ('op_mult', '×')],
-            [('num_4', '4'), ('num_5', '5'), ('num_6', '6'), ('op_minus', '-')],
-            [('num_1', '1'), ('num_2', '2'), ('num_3', '3'), ('op_plus', '+')],
-            [('num_0', '0'), ('num_comma', ','), ('op_equal', '=')],
-        ]
-
-        zero_button = False
-        for row, keys in enumerate(button_list):
-            for col, key in enumerate(keys):
-                self.buttons[key[0]] = CalcPushButton(key[1], objectName=key[0])
-                cur_button = self.buttons[key[0]]
-                if key[0] == 'etc_ac':
-                    cur_button.clicked.connect(self.clear)
-                elif key[0] == 'etc_plusminus':
-                    cur_button.clicked.connect(self.change_sign)
-                elif key[0] == 'op_div':
-                    cur_button.clicked.connect(partial(self.add_operation, '/'))
-                elif key[0] == 'op_mult':
-                    cur_button.clicked.connect(partial(self.add_operation, '*'))
-                elif key[0] in ('etc_percent', 'op_minus', 'op_plus'):
-                    cur_button.clicked.connect(partial(self.add_operation, key[1]))
-                elif key[1].isdigit():
-                    cur_button.clicked.connect(partial(self.add_number, key[1]))
-                elif key[1] == ',':
-                    cur_button.clicked.connect(self.add_comma)
-                elif key[1] == '=':
-                    cur_button.clicked.connect(self.get_result)
-
-                if key[1] == '0':
-                    zero_button = True
-                    cur_button.setFixedSize(BUTTON_WIDTH * 2, BUTTON_HEIGHT)
-                    layout.addWidget(cur_button, row, col, 1, 2)
-                elif zero_button:
-                    layout.addWidget(cur_button, row, col + 1)
-                else:
-                    layout.addWidget(cur_button, row, col)
-
+        layout = self._create_buttons_layout()
         main_layout.addLayout(layout)
 
         container = QWidget()
@@ -99,9 +54,71 @@ class MainWindow(QMainWindow):
 
         # Set the central widget of the Window.
         self.setCentralWidget(container)
-        self.set_dark_theme()
+        self._set_dark_theme()
 
-    def set_dark_theme(self):
+    def _create_display(self):
+        self._display = QLabel('0')
+        self._display.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self._display.setFixedSize(WINDOW_WIDTH, DISPLAY_HEIGHT)
+        self._display.setWordWrap(True)
+
+    def _create_buttons_layout(self):
+        layout = QGridLayout()
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 0, 0, 0)
+        self._buttons = {}
+        self._create_buttons(self._get_buttons_list(), layout)
+        return layout
+
+    @staticmethod
+    def _get_buttons_list():
+        return [
+            [('etc_lp', '('), ('etc_rp', ')'), ('etc_ac', 'AC'), ('etc_plusminus', '+/-'), ('etc_percent', '%'),
+             ('op_div', '÷')],
+            [('etc_pow2', 'x^2'), ('etc_pow_y', 'x^y'), ('num_7', '7'), ('num_8', '8'), ('num_9', '9'),
+             ('op_mult', '×')],
+            [('etc_2pow_x', '2^x'), ('etc_10pow_x', '10^x'), ('num_4', '4'), ('num_5', '5'), ('num_6', '6'),
+             ('op_minus', '-')],
+            [('etc_root2', 'sqrt(x)'), ('num_1', '1'), ('num_2', '2'), ('num_3', '3'), ('op_plus', '+')],
+            [('etc_root_y', 'root(x, y)'), ('num_0', '0'), ('num_comma', ','), ('op_equal', '=')],
+        ]
+
+    def _create_buttons(self, buttons_list, layout):
+        zero_button = False
+        for row, keys in enumerate(buttons_list):
+            shift = 0
+            for col, key in enumerate(keys):
+                self._buttons[key[0]] = CalcPushButton(key[1], objectName=key[0])
+                cur_button = self._buttons[key[0]]
+                if key[0] == 'etc_ac':
+                    cur_button.clicked.connect(self._clear)
+                elif key[0] == 'etc_plusminus':
+                    cur_button.clicked.connect(partial(self._calc, self._change_sign))
+                elif key[0] == 'op_div':
+                    cur_button.clicked.connect(partial(self._calc, self._add_operation, '/'))
+                elif key[0] == 'op_mult':
+                    cur_button.clicked.connect(partial(self._calc, self._add_operation, '*'))
+                elif key[0] in ('etc_percent', 'op_minus', 'op_plus'):
+                    cur_button.clicked.connect(partial(self._calc, self._add_operation, key[1]))
+                elif key[1].isdigit():
+                    cur_button.clicked.connect(partial(self._calc, self._add_number, key[1]))
+                elif key[1] == ',':
+                    cur_button.clicked.connect(partial(self._calc, self._add_comma))
+                elif key[1] == '(':
+                    cur_button.clicked.connect(partial(self._calc, self._add_left_par))
+                elif key[1] == ')':
+                    cur_button.clicked.connect(partial(self._calc, self._add_right_par))
+                elif key[1] == '=':
+                    cur_button.clicked.connect(partial(self._calc, self._get_result))
+
+                if key[0] in ('num_0', 'etc_root2', 'etc_root_y'):
+                    cur_button.setFixedSize(BUTTON_WIDTH * 2, BUTTON_HEIGHT)
+                    layout.addWidget(cur_button, row, col + shift, 1, 2)
+                    shift += 1
+                else:
+                    layout.addWidget(cur_button, row, col + shift)
+
+    def _set_dark_theme(self):
         self.setStyleSheet("* {"
                            "    color: white;"
                            "}"
@@ -139,59 +156,169 @@ class MainWindow(QMainWindow):
                            "}"
                            "")
 
-    def clear(self):
-        if self.buttons['etc_ac'].text() == 'C':
-            cur_expr = self.display.text()
-            if cur_expr[-1].isdigit() or cur_expr[-1] == ',':
-                last_num_idx, _ = _find_last_number(cur_expr)
-                cur_expr = cur_expr[:last_num_idx]
-            else:
-                cur_expr = cur_expr[:-2]
+    def _clear(self):
+        if self._display.text() == '0':
+            self._buttons['etc_ac'].setText('AC')
+            return
 
-            self.display.setText(cur_expr)
-            self.buttons['etc_ac'].setText('AC')
+        if self._buttons['etc_ac'].text() == 'C':
+            self._clear_one()
+            self._buttons['etc_ac'].setText('AC')
         else:
-            self.display.setText('0')
+            self._clear_all()
 
-    def change_sign(self):
-        self.buttons['etc_ac'].setText('C')
-        cur_expr = self.display.text()
-        last_num_idx, _ = _find_last_number(cur_expr)
-        self.display.setText(cur_expr[:last_num_idx] + '-' + cur_expr[last_num_idx:])
+    def _clear_one(self):
+        if self._buttons['etc_ac'].text() == 'AC':
+            return
 
-    def add_operation(self, op):
-        self.buttons['etc_ac'].setText('C')
-        cur_expr = self.display.text()
+        cur_expr = self._display.text()
         if cur_expr[-1].isdigit() or cur_expr[-1] == ',':
-            cur_expr += ' ' + op
+            last_num_idx, _ = _find_last_number(cur_expr)
+            cur_expr = cur_expr[:last_num_idx]
+        elif cur_expr[-1] == ')':
+            cur_expr = cur_expr[:-1]
+        else:
+            cur_expr = cur_expr[:-2]
+
+        if not cur_expr:
+            cur_expr = '0'
+
+        self._display.setText(cur_expr)
+        if cur_expr == '0':
+            self._buttons['etc_ac'].setText('AC')
+        else:
+            self._buttons['etc_ac'].setText('C')
+
+    def _clear_all(self):
+        self._display.setText('0')
+        self._buttons['etc_ac'].setText('AC')
+        self._display.setProperty('got_result', False)
+
+    def _calc(self, func, arg=''):
+        if self._display.property('got_result'):
+            self._clear_all()
+
+        func(arg) if arg else func()
+
+    def _change_sign(self):
+        if self._display.text() == '0':
+            return
+
+        cur_expr = self._display.text()
+        last_num_idx, _ = _find_last_number(cur_expr)
+        self._display.setText(f'{cur_expr[:last_num_idx]}-{cur_expr[last_num_idx:]}')
+        self._buttons['etc_ac'].setText('C')
+
+    def _add_operation(self, op):
+        cur_expr = self._display.text()
+        if cur_expr[-1] == '(' and op != '-':
+            return
+
+        if op == '-' and cur_expr[-1] in ('(', ')'):
+            cur_expr += op
+        elif cur_expr[-1].isdigit() or cur_expr[-1] in (',', '(', ')'):
+            cur_expr += f' {op}'
         else:
             cur_expr = cur_expr[:-1] + op
-        self.display.setText(cur_expr)
+        self._display.setText(cur_expr)
+        self._buttons['etc_ac'].setText('C')
 
-    def add_number(self, num):
-        self.buttons['etc_ac'].setText('C')
-        cur_expr = self.display.text()
+    def _add_number(self, num):
+        cur_expr = self._display.text()
+        if cur_expr[-1] == ')':
+            return
+
         if cur_expr == '0':
             cur_expr = num
         else:
             no_space = cur_expr[-1].isdigit() or cur_expr[-1] == ','
-            cur_expr += num if no_space else ' ' + num
-        self.display.setText(cur_expr)
+            cur_expr += num if no_space else f' {num}'
 
-    def add_comma(self):
-        self.buttons['etc_ac'].setText('C')
-        cur_expr = self.display.text()
-        if cur_expr[-1] == ',':
+        self._display.setText(cur_expr)
+        self._buttons['etc_ac'].setText('C')
+
+    def _add_comma(self):
+        cur_expr = self._display.text()
+        if cur_expr[-1] in (')', ','):
             return
-        cur_expr += ',' if cur_expr[-1].isdigit() else '0,'
-        self.display.setText(cur_expr)
 
-    def get_result(self):
-        self.buttons['etc_ac'].setText('AC')
-        cur_expr = self.display.text()
+        cur_expr += ',' if cur_expr[-1].isdigit() else '0,'
+        self._display.setText(cur_expr)
+        self._buttons['etc_ac'].setText('C')
+
+    def _add_left_par(self):
+        cur_expr = self._display.text()
+        if cur_expr == '0':
+            cur_expr = '('
+        elif not cur_expr[-1].isdigit() and cur_expr[-1] not in (')', ','):
+            cur_expr = f'{cur_expr} ('
+        else:
+            return
+        self._display.setText(cur_expr)
+        self._buttons['etc_ac'].setText('C')
+
+    def _add_right_par(self):
+        cur_expr = self._display.text()
+        if (cur_expr[-1].isdigit() or cur_expr[-1] in (')', ',')) \
+                and cur_expr.count('(') > cur_expr.count(')'):
+            cur_expr += ')'
+            self._display.setText(cur_expr)
+            self._buttons['etc_ac'].setText('C')
+
+    def _get_result(self):
+        cur_expr = self._display.text()
+        if cur_expr == '0':
+            return
+
         if not (cur_expr[-1].isdigit() or cur_expr[-1] == ','):
             _, last_num = _find_last_number(cur_expr)
-            cur_expr += ' ' + last_num
+            cur_expr += f' {last_num}'
 
-        # self.display.setText(calc.expression_in_brackets(cur_expr))
-        self.display.setText(cur_expr + ' =')
+        result = calc.calc_expression(cur_expr)
+        result = result.replace('.', ',')
+        if result.endswith(',0'):
+            result = result[:-2]
+
+        self._display.setText(result)
+        self._display.setProperty('got_result', True)
+        self._buttons['etc_ac'].setText('AC')
+
+    def keyPressEvent(self, event: QKeyEvent):
+        super().keyPressEvent(event)
+        if event.keyCombination() == QKeyCombination(Qt.Modifier.ALT, Qt.Key.Key_Escape):
+            self._buttons['etc_ac'].setText('AC')
+            self._buttons['etc_ac'].animateClick()
+        elif event.keyCombination() == QKeyCombination(Qt.Modifier.ALT, Qt.Key.Key_Minus):
+            self._buttons['etc_plusminus'].animateClick()
+        elif event.matches(QKeySequence.StandardKey.Paste):
+            self._clear_all()
+            self._display.setText(QGuiApplication.clipboard().text())
+        elif event.matches(QKeySequence.StandardKey.Copy):
+            QGuiApplication.clipboard().setText(self._display.text())
+        elif event.key() == Qt.Key.Key_Escape:
+            self._buttons['etc_ac'].animateClick()
+        elif event.key() == Qt.Key.Key_Backspace:
+            self._buttons['etc_ac'].setText('C')
+            self._buttons['etc_ac'].animateClick()
+        elif event.key() == Qt.Key.Key_ParenLeft:
+            self._buttons['etc_lp'].animateClick()
+        elif event.key() == Qt.Key.Key_ParenRight:
+            self._buttons['etc_rp'].animateClick()
+        elif event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            self._buttons['op_equal'].animateClick()
+        elif event.key() == Qt.Key.Key_Percent:
+            self._buttons['etc_percent'].animateClick()
+        elif event.key() == Qt.Key.Key_Slash:
+            self._buttons['op_div'].animateClick()
+        elif event.key() == Qt.Key.Key_Asterisk:
+            self._buttons['op_mult'].animateClick()
+        elif event.key() == Qt.Key.Key_Minus:
+            self._buttons['op_minus'].animateClick()
+        elif event.key() == Qt.Key.Key_Plus:
+            self._buttons['op_plus'].animateClick()
+        elif event.key() in (Qt.Key.Key_Comma, Qt.Key.Key_Period):
+            self._buttons['num_comma'].animateClick()
+        elif event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            self._buttons['op_equal'].animateClick()
+        elif event.text() in [str(i) for i in range(10)]:
+            self._buttons[f'num_{event.text()}'].animateClick()
