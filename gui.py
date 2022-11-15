@@ -74,7 +74,7 @@ class MainWindow(QMainWindow):
     def _get_buttons_list():
         return [
             [('etc_lp', '('), ('etc_rp', ')'), ('etc_ac', 'AC'),
-             ('etc_plusminus', '+\u2044-'), ('etc_percent', '%'), ('op_div', '÷')],
+             ('etc_plusminus', '\u207A\u2044\u208B'), ('etc_percent', '%'), ('op_div', '÷')],
 
             [('etc_pow2', 'x\u00B2'), ('etc_pow_y', 'x\u02B8'), ('num_7', '7'),
              ('num_8', '8'), ('num_9', '9'), ('op_mult', '×')],
@@ -125,42 +125,45 @@ class MainWindow(QMainWindow):
                     layout.addWidget(cur_button, row, col + shift)
 
     def _set_dark_theme(self):
-        self.setStyleSheet("* {"
-                           "    color: white;"
-                           "}"
-                           "QLabel {"
-                           "    background-color: rgb(50, 50, 50);"
-                           "    padding: 5px;"
-                           f"    font: {BUTTON_WIDTH // 2}px"
-                           "}"
-                           "QPushButton {"
-                           "    border-top: 1px solid;"
-                           "    border-left: 1px solid;"
-                           "    border-style: outset;"
-                           "    border-color: rgb(50, 50, 50);"
-                           f"    font: {BUTTON_HEIGHT // 2}px"
-                           "}"
-                           "QPushButton[objectName^='etc'] {"
-                           "    background-color: rgb(70, 70, 70);"
-                           "}"
-                           "QPushButton[objectName^='etc']:pressed {"
-                           "    background-color: rgb(100, 100, 100);"
-                           "    border-style: inset;"
-                           "}"
-                           "QPushButton[objectName^='num'] {"
-                           "    background-color: rgb(100, 100, 100);"
-                           "}"
-                           "QPushButton[objectName^='num']:pressed {"
-                           "    background-color: rgb(160, 160, 160);"
-                           "    border-style: inset;"
-                           "}"
-                           "QPushButton[objectName^='op'] {"
-                           "    background-color: rgb(253, 158, 43);"
-                           "}"
-                           "QPushButton[objectName^='op']:pressed {"
-                           "    background-color: rgb(201, 125, 32);"
-                           "}"
-                           "")
+        self.setStyleSheet(
+            "* {"
+            "    color: white;"
+            "}"
+            "QLabel {"
+            "    background-color: rgb(50, 50, 50);"
+            "    padding: 5px;"
+            f"    font: {BUTTON_HEIGHT // 2}px"
+            "}"
+            "QPushButton {"
+            "    border-top: 1px solid;"
+            "    border-left: 1px solid;"
+            "    border-style: outset;"
+            "    border-color: rgb(50, 50, 50);"
+            f"    font: {BUTTON_HEIGHT // 2 - 2}px"
+            "}"
+            "QPushButton[objectName^='etc'] {"
+            "    border-color: rgb(40, 40, 40);"
+            "    background-color: rgb(70, 70, 70);"
+            "}"
+            "QPushButton[objectName^='etc']:pressed {"
+            "    background-color: rgb(100, 100, 100);"
+            "    border-style: inset;"
+            "}"
+            "QPushButton[objectName^='num'] {"
+            "    background-color: rgb(100, 100, 100);"
+            "}"
+            "QPushButton[objectName^='num']:pressed {"
+            "    background-color: rgb(160, 160, 160);"
+            "    border-style: inset;"
+            "}"
+            "QPushButton[objectName^='op'] {"
+            "    border-color: rgb(60, 60, 60);"
+            "    background-color: rgb(253, 158, 43);"
+            "}"
+            "QPushButton[objectName^='op']:pressed {"
+            "    background-color: rgb(201, 125, 32);"
+            "}"
+        )
 
     def _clear(self):
         if self._display.text() == '0':
@@ -301,7 +304,7 @@ class MainWindow(QMainWindow):
             self._display.setText(QGuiApplication.clipboard().text())
         elif event.matches(QKeySequence.StandardKey.Copy):
             QGuiApplication.clipboard().setText(self._display.text())
-        elif event.key() == Qt.Key.Key_Escape:
+        elif event.key() in (Qt.Key.Key_Escape, Qt.Key.Key_Delete):
             self._buttons['etc_ac'].animateClick()
         elif event.key() == Qt.Key.Key_Backspace:
             self._buttons['etc_ac'].setText('C')
