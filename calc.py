@@ -1,4 +1,5 @@
 import re
+from log import log_decision as de
 
 def expression_in_brackets(expression):
     # выделяет блоки от открывающей до закрывающей круглой скобки
@@ -64,6 +65,7 @@ def plus_minus(full_expression):
 
 
 def calc_expression(expression) -> str:
+    exp_in = expression
     expression = expression.replace(" ", '')
     expression = expression.replace(",", '.')
     expression = multiplicate(expression)
@@ -72,6 +74,7 @@ def calc_expression(expression) -> str:
     expression = multiplicate(expression)
     expression = divide(expression)
     expression = plus_minus(expression)
+    de(exp_in, expression)
     return expression
 
 # demo
