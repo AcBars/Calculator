@@ -318,7 +318,7 @@ class MainWindow(QMainWindow):
             self._clear_all()
             return
 
-        if not (cur_expr[-1].isdigit() or cur_expr[-1] == ','):
+        if not (cur_expr[-1].isdigit() or cur_expr[-1] in (',', ')')):
             _, last_num = _find_last_number(cur_expr)
             cur_expr += f' {last_num}'
 
@@ -333,42 +333,41 @@ class MainWindow(QMainWindow):
         self._buttons['etc_ac'].setText('AC')
         self._update_font_size()
 
+    @property
+    def _key_mappings(self):
+        return {
+            Qt.Key.Key_Escape: 'etc_ac',
+            Qt.Key.Key_Delete: 'etc_ac',
+            Qt.Key.Key_ParenLeft: 'etc_lp',
+            Qt.Key.Key_ParenRight: 'etc_rp',
+            Qt.Key.Key_Percent: 'etc_percent',
+            Qt.Key.Key_Slash: 'op_div',
+            Qt.Key.Key_Minus: 'op_minus',
+            Qt.Key.Key_Plus: 'op_plus',
+            Qt.Key.Key_Comma: 'num_comma',
+            Qt.Key.Key_Period: 'num_comma',
+            Qt.Key.Key_Return: 'op_equal',
+            Qt.Key.Key_Enter: 'op_equal'
+        }
+
     def keyPressEvent(self, event: QKeyEvent):
         super().keyPressEvent(event)
-        if event.keyCombination() == QKeyCombination(Qt.Modifier.ALT, Qt.Key.Key_Escape):
-            self._buttons['etc_ac'].setText('AC')
-            self._buttons['etc_ac'].animateClick()
-        elif event.keyCombination() == QKeyCombination(Qt.Modifier.ALT, Qt.Key.Key_Minus):
-            self._buttons['etc_plusminus'].animateClick()
-        elif event.matches(QKeySequence.StandardKey.Paste):
+        if event.matches(QKeySequence.StandardKey.Paste):
             self._clear_all()
             self._display.setText(QGuiApplication.clipboard().text())
             self._update_font_size()
         elif event.matches(QKeySequence.StandardKey.Copy):
             QGuiApplication.clipboard().setText(self._display.text())
-        elif event.key() in (Qt.Key.Key_Escape, Qt.Key.Key_Delete):
+        elif event.keyCombination() == QKeyCombination(Qt.Modifier.ALT, Qt.Key.Key_Escape):
+            self._buttons['etc_ac'].setText('AC')
             self._buttons['etc_ac'].animateClick()
+        elif event.keyCombination() == QKeyCombination(Qt.Modifier.ALT, Qt.Key.Key_Minus):
+            self._buttons['etc_plusminus'].animateClick()
+        elif Qt.Key.Key_Asterisk in (event.keyCombination().key(), event.key()):
+            self._buttons['op_mult'].animateClick()
         elif event.key() == Qt.Key.Key_Backspace:
             self._clear_char()
-        elif event.key() == Qt.Key.Key_ParenLeft:
-            self._buttons['etc_lp'].animateClick()
-        elif event.key() == Qt.Key.Key_ParenRight:
-            self._buttons['etc_rp'].animateClick()
-        elif event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
-            self._buttons['op_equal'].animateClick()
-        elif event.key() == Qt.Key.Key_Percent:
-            self._buttons['etc_percent'].animateClick()
-        elif event.key() == Qt.Key.Key_Slash:
-            self._buttons['op_div'].animateClick()
-        elif event.key() == Qt.Key.Key_Asterisk:
-            self._buttons['op_mult'].animateClick()
-        elif event.key() == Qt.Key.Key_Minus:
-            self._buttons['op_minus'].animateClick()
-        elif event.key() == Qt.Key.Key_Plus:
-            self._buttons['op_plus'].animateClick()
-        elif event.key() in (Qt.Key.Key_Comma, Qt.Key.Key_Period):
-            self._buttons['num_comma'].animateClick()
-        elif event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
-            self._buttons['op_equal'].animateClick()
         elif event.text() in [str(i) for i in range(10)]:
             self._buttons[f'num_{event.text()}'].animateClick()
+        elif btn_name := self._key_mappings.get(event.key()):
+            self._buttons[btn_name].animateClick()
