@@ -1,3 +1,4 @@
+import re
 from functools import partial
 
 from PyQt6.QtCore import QKeyCombination, Qt
@@ -24,6 +25,11 @@ def _find_last_number(expr):
             return -i + 1, last_num
 
     return 0, last_num or '0'
+
+
+def _find_all_numbers(expr):
+    num_pattern = r'(-?\d*[,.]?\d*)'
+    return re.findall(num_pattern, expr)
 
 
 class CalcPushButton(QPushButton):
@@ -174,6 +180,15 @@ class MainWindow(QMainWindow):
             "}"
         )
 
+    def _update_font_size(self):
+        cur_expr = self._display.text()
+        num_len = len(max(_find_all_numbers(cur_expr), key=len))
+        self._display.setStyleSheet(
+            "QLabel {"
+            f"    font: {max(10, BUTTON_HEIGHT // 2 - max(0, (num_len // 12 - 1) * 12 + num_len % 12))}px"
+            "}"
+        )
+
     @staticmethod
     def _start(expr):
         return expr in ('0', 'Error')
@@ -181,9 +196,11 @@ class MainWindow(QMainWindow):
     def _clear(self):
         if self._start(self._display.text()) or self._buttons['etc_ac'].text() == 'AC':
             self._clear_all()
-        elif self._buttons['etc_ac'].text() == 'C':
+        else:
             self._clear_one()
             self._buttons['etc_ac'].setText('AC')
+
+        self._update_font_size()
 
     def _clear_all(self):
         self._display.setText('0')
@@ -196,6 +213,7 @@ class MainWindow(QMainWindow):
 
         if cur_expr := self._display.text()[:-1]:
             self._display.setText(cur_expr)
+            self._update_font_size()
         else:
             self._clear_all()
 
@@ -264,6 +282,7 @@ class MainWindow(QMainWindow):
 
         self._display.setText(cur_expr)
         self._buttons['etc_ac'].setText('C')
+        self._update_font_size()
 
     def _add_comma(self):
         cur_expr = self._display.text()
@@ -312,6 +331,7 @@ class MainWindow(QMainWindow):
         result = result.replace('.', ',').removesuffix(',0')
         self._display.setText(result)
         self._buttons['etc_ac'].setText('AC')
+        self._update_font_size()
 
     def keyPressEvent(self, event: QKeyEvent):
         super().keyPressEvent(event)
@@ -323,6 +343,7 @@ class MainWindow(QMainWindow):
         elif event.matches(QKeySequence.StandardKey.Paste):
             self._clear_all()
             self._display.setText(QGuiApplication.clipboard().text())
+            self._update_font_size()
         elif event.matches(QKeySequence.StandardKey.Copy):
             QGuiApplication.clipboard().setText(self._display.text())
         elif event.key() in (Qt.Key.Key_Escape, Qt.Key.Key_Delete):
