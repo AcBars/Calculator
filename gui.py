@@ -8,10 +8,10 @@ import calc
 
 BUTTON_HEIGHT = 50
 BUTTON_WIDTH = int(BUTTON_HEIGHT * 1.2)
-BUTTON_ROWS = 5
-BUTTON_COLS = 6
 DISPLAY_HEIGHT = BUTTON_HEIGHT * 2
-WINDOW_WIDTH = int(BUTTON_COLS * BUTTON_WIDTH)
+BUTTON_ROWS = 5
+# BUTTON_COLS = 6
+# WINDOW_WIDTH = int(BUTTON_COLS * BUTTON_WIDTH)
 WINDOW_HEIGHT = DISPLAY_HEIGHT + BUTTON_ROWS * BUTTON_HEIGHT
 
 
@@ -33,11 +33,16 @@ class CalcPushButton(QPushButton):
 
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, basic=True):
         super().__init__()
 
+        self.basic = basic
+
+        button_cols = 4 if self.basic else 6
+        self.window_width = int(button_cols * BUTTON_WIDTH)
+
         self.setWindowTitle("Calculator")
-        self.setFixedSize(WINDOW_WIDTH, WINDOW_HEIGHT)
+        self.setFixedSize(self.window_width, WINDOW_HEIGHT)
 
         main_layout = QVBoxLayout()
         main_layout.setSpacing(0)
@@ -59,7 +64,7 @@ class MainWindow(QMainWindow):
     def _create_display(self):
         self._display = QLabel('0')
         self._display.setAlignment(Qt.AlignmentFlag.AlignRight)
-        self._display.setFixedSize(WINDOW_WIDTH, DISPLAY_HEIGHT)
+        self._display.setFixedSize(self.window_width, DISPLAY_HEIGHT)
         self._display.setWordWrap(True)
 
     def _create_buttons_layout(self):
@@ -70,9 +75,14 @@ class MainWindow(QMainWindow):
         self._create_buttons(self._get_buttons_list(), layout)
         return layout
 
-    @staticmethod
-    def _get_buttons_list():
+    def _get_buttons_list(self):
         return [
+            [('etc_ac', 'AC'), ('etc_lp', '('), ('etc_rp', ')'), ('op_div', '÷')],
+            [('num_7', '7'), ('num_8', '8'), ('num_9', '9'), ('op_mult', '×')],
+            [('num_4', '4'), ('num_5', '5'), ('num_6', '6'), ('op_minus', '-')],
+            [('num_1', '1'), ('num_2', '2'), ('num_3', '3'), ('op_plus', '+')],
+            [('num_0', '0'), ('num_comma', ','), ('op_equal', '=')],
+        ] if self.basic else [
             [('etc_lp', '('), ('etc_rp', ')'), ('etc_ac', 'AC'),
              ('etc_plusminus', '\u207A\u2044\u208B'), ('etc_percent', '%'), ('op_div', '÷')],
 
@@ -90,7 +100,6 @@ class MainWindow(QMainWindow):
         ]
 
     def _create_buttons(self, buttons_list, layout):
-        zero_button = False
         for row, keys in enumerate(buttons_list):
             shift = 0
             for col, key in enumerate(keys):
@@ -165,19 +174,34 @@ class MainWindow(QMainWindow):
             "}"
         )
 
-    def _clear(self):
-        if self._display.text() == '0':
-            self._buttons['etc_ac'].setText('AC')
-            return
+    @staticmethod
+    def _start(expr):
+        return expr in ('0', 'Error')
 
-        if self._buttons['etc_ac'].text() == 'C':
+    def _clear(self):
+        if self._start(self._display.text()) or self._buttons['etc_ac'].text() == 'AC':
+            self._clear_all()
+        elif self._buttons['etc_ac'].text() == 'C':
             self._clear_one()
             self._buttons['etc_ac'].setText('AC')
+
+    def _clear_all(self):
+        self._display.setText('0')
+        self._buttons['etc_ac'].setText('AC')
+
+    def _clear_char(self):
+        if self._start(self._display.text()):
+            self._clear_all()
+            return
+
+        if cur_expr := self._display.text()[:-1]:
+            self._display.setText(cur_expr)
         else:
             self._clear_all()
 
     def _clear_one(self):
-        if self._buttons['etc_ac'].text() == 'AC':
+        if self._start(self._display.text()) or self._buttons['etc_ac'].text() == 'AC':
+            self._clear_all()
             return
 
         cur_expr = self._display.text()
@@ -193,24 +217,19 @@ class MainWindow(QMainWindow):
             cur_expr = '0'
 
         self._display.setText(cur_expr)
-        if cur_expr == '0':
+        if self._start(cur_expr):
             self._buttons['etc_ac'].setText('AC')
         else:
             self._buttons['etc_ac'].setText('C')
 
-    def _clear_all(self):
-        self._display.setText('0')
-        self._buttons['etc_ac'].setText('AC')
-        self._display.setProperty('got_result', False)
-
     def _calc(self, func, arg=''):
-        if self._display.property('got_result'):
-            self._clear_all()
+        if self._start(self._display.text()):
+            self._display.setText('0')
 
-        func(arg) if arg else func()
+        return func(arg) if arg else func()
 
     def _change_sign(self):
-        if self._display.text() == '0':
+        if self._start(self._display.text()):
             return
 
         cur_expr = self._display.text()
@@ -234,10 +253,10 @@ class MainWindow(QMainWindow):
 
     def _add_number(self, num):
         cur_expr = self._display.text()
-        if cur_expr[-1] == ')':
+        if cur_expr and cur_expr[-1] == ')':
             return
 
-        if cur_expr == '0':
+        if self._start(cur_expr):
             cur_expr = num
         else:
             no_space = cur_expr[-1].isdigit() or cur_expr[-1] == ','
@@ -257,7 +276,7 @@ class MainWindow(QMainWindow):
 
     def _add_left_par(self):
         cur_expr = self._display.text()
-        if cur_expr == '0':
+        if self._start(cur_expr):
             cur_expr = '('
         elif not cur_expr[-1].isdigit() and cur_expr[-1] not in (')', ','):
             cur_expr = f'{cur_expr} ('
@@ -276,20 +295,22 @@ class MainWindow(QMainWindow):
 
     def _get_result(self):
         cur_expr = self._display.text()
-        if cur_expr == '0':
+        if self._start(cur_expr):
+            self._clear_all()
             return
 
         if not (cur_expr[-1].isdigit() or cur_expr[-1] == ','):
             _, last_num = _find_last_number(cur_expr)
             cur_expr += f' {last_num}'
 
-        result = calc.calc_expression(cur_expr)
-        result = result.replace('.', ',')
-        if result.endswith(',0'):
-            result = result[:-2]
+        try:
+            result = str(round(float(calc.calc_expression(cur_expr)), 6))
+        except Exception as e:
+            print(e)
+            result = 'Error'
 
+        result = result.replace('.', ',').removesuffix(',0')
         self._display.setText(result)
-        self._display.setProperty('got_result', True)
         self._buttons['etc_ac'].setText('AC')
 
     def keyPressEvent(self, event: QKeyEvent):
@@ -307,8 +328,7 @@ class MainWindow(QMainWindow):
         elif event.key() in (Qt.Key.Key_Escape, Qt.Key.Key_Delete):
             self._buttons['etc_ac'].animateClick()
         elif event.key() == Qt.Key.Key_Backspace:
-            self._buttons['etc_ac'].setText('C')
-            self._buttons['etc_ac'].animateClick()
+            self._clear_char()
         elif event.key() == Qt.Key.Key_ParenLeft:
             self._buttons['etc_lp'].animateClick()
         elif event.key() == Qt.Key.Key_ParenRight:

@@ -1,8 +1,9 @@
 import sys
-from log import log_startend as se
+
 from PyQt6.QtWidgets import QApplication
 
 import gui
+from log import log_startend as se
 
 app = QApplication(sys.argv)
 
