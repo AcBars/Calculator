@@ -2,6 +2,7 @@ import re
 
 
 def percentage(full_expression):
+    #[-+]*\s*[0-9]+(?=[-+]+\s*[-+]*\d+\s*%)[-+]+\s*([-+]*\d+\s*%)
     pattern = re.compile(r"[-+]?[\.0-9]+%?")
     m = pattern.findall(full_expression)
     sum = float(0)
@@ -71,7 +72,8 @@ def calculate_mul_div(full_expression):
     full_expression = full_expression.replace(")", '')
     full_expression = full_expression.replace("(", '')
 
-    m = re.search(r'[-+ *\ /][*\ /]', full_expression)
+    m = re.search(r'[-+ *\/][*\ /]', full_expression)
+
     if m:
         print('Недопустимая компбинация операций')
         return 'NaN'
@@ -79,6 +81,9 @@ def calculate_mul_div(full_expression):
     # pattern = 'r[-+]?[0-9.]+[*\/][-+]?[0-9.]+'
     m = re.search(r"[-+]?[0-9.]+[*\/][-+]?[0-9.]+", full_expression)
     # dividing
+    if not m:
+        full_expression = calculate_sum_sub(full_expression)
+        return full_expression
     while m:
         mm = re.search(r'/', m[0])
         # print(f'/m:{m}')
@@ -130,7 +135,8 @@ def main_calculation(full_expression):
         mm = re.search(r'^[-+]?[0-9.]+$', full_expression)
     return full_expression
 
-# expression = '40/(2 * (2*10-5) + (10*(6-5)) ))'
+#expression = '40/(2 * (2*10-5) + (10*(6-5)) ))'
+# expression = '(3*(5+2))*(1+2)'
 # print(f'expression : {expression}')
 # result = main_calculation(expression)
 # print(f'result: {result}')
