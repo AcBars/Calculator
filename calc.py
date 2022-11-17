@@ -1,4 +1,5 @@
 import re
+from log import log_solution as sol
 
 
 def percentage(full_expression):
@@ -128,11 +129,13 @@ def calculate_sum_sub(full_expression):
 
 
 def main_calculation(full_expression):
+    exp_in = full_expression
     full_expression = prepare_expression(full_expression)
     mm = re.search(r'^[-+]?[0-9.]+$', full_expression)
     while not mm:
         full_expression = calculation(full_expression)
         mm = re.search(r'^[-+]?[0-9.]+$', full_expression)
+    sol (exp_in, full_expression)
     return full_expression
 
 #expression = '40/(2 * (2*10-5) + (10*(6-5)) ))'

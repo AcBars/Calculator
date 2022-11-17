@@ -34,3 +34,7 @@
  17.11.2022 ; 22:55:16; calculation; mobai; ( 8 + 2) * 5; 50.0
  17.11.2022 ; 22:55:46; End; mobai
  17.11.2022 ; 22:00:21; Start; psyfluid
+ 17.11.2022 ; 22:11:54; End; psyfluid
+ 18.11.2022 ; 02:35:08; Start; psyfluid
+ 18.11.2022 ; 02:35:29; calculation; psyfluid; 2 / ( 5 - 6); -2.0
+ 18.11.2022 ; 02:35:45; End; psyfluid
