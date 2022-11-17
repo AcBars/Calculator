@@ -9,11 +9,11 @@
 * Логирование - Артем
 * Main - Артем
  
-### **calc_expression(expression) -> str**
+### **main_calculation(expression) -> str**  
 на вход получает строку, которую надо вычислить
 возвращает итог типа str
-например:
-result = main_calculation('(2*3-1)*(1+2)/(3*(8/2+1))')
+например:  
+result = main_calculation('(2*3-1)*(1+2)/(3*(8/2+1))'  
 возвращает '1.0'
 
 ### **log**
