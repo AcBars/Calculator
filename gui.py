@@ -323,7 +323,7 @@ class MainWindow(QMainWindow):
             cur_expr += f' {last_num}'
 
         try:
-            result = str(round(float(calc.calc_expression(cur_expr)), 6))
+            result = str(round(float(calc.main_calculation(cur_expr)), 6))
         except Exception as e:
             print(e)
             result = 'Error'
