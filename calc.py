@@ -115,6 +115,7 @@ def calculate_mul_div(full_expression):
 
 
 def calculate_sum_sub(full_expression):
+    full_expression = full_expression.replace('--', '+')
     m = re.findall(r"[-+]?[0-9.]+", full_expression)
     if m:
         s = m.copy()
@@ -136,7 +137,8 @@ def main_calculation(full_expression):
     return full_expression
 
 #expression = '40/(2 * (2*10-5) + (10*(6-5)) ))'
-# expression = '(3*(5+2))*(1+2)'
+#expression = '(3*(5+2))*(1--2)'
+# expression = '(2-(5-6)'
 # print(f'expression : {expression}')
 # result = main_calculation(expression)
 # print(f'result: {result}')
