@@ -1,9 +1,10 @@
 import re
+
 from log import log_solution as sol
 
 
 def percentage(full_expression):
-    #[-+]*\s*[0-9]+(?=[-+]+\s*[-+]*\d+\s*%)[-+]+\s*([-+]*\d+\s*%)
+    # [-+]*\s*[0-9]+(?=[-+]+\s*[-+]*\d+\s*%)[-+]+\s*([-+]*\d+\s*%)
     pattern = re.compile(r"[-+]?[\.0-9]+%?")
     m = pattern.findall(full_expression)
     sum = float(0)
@@ -136,11 +137,11 @@ def main_calculation(full_expression):
     while not mm:
         full_expression = calculation(full_expression)
         mm = re.search(r'^[-+]?[0-9.]+$', full_expression)
-    sol (exp_in, full_expression)
+    sol(exp_in, full_expression)
     return full_expression
 
-#expression = '40/(2 * (2*10-5) + (10*(6-5)) ))'
-#expression = '(3*(5+2))*(1--2)'
+# expression = '40/(2 * (2*10-5) + (10*(6-5)) ))'
+# expression = '(3*(5+2))*(1--2)'
 # expression = '(2-(5-6)'
 # print(f'expression : {expression}')
 # result = main_calculation(expression)
